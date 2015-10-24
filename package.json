@@ -1,0 +1,26 @@
+{
+  "name": "rasp_twelite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mmbarion/rasp_twelite.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mmbarion/rasp_twelite/issues"
+  },
+  "homepage": "https://github.com/mmbarion/rasp_twelite#readme",
+  "dependencies": {
+    "aws-sdk": "^2.2.10",
+    "config": "^1.16.0",
+    "request": "^2.65.0",
+    "serialport": "^2.0.1"
+  },
+  "devDependencies": {}
+}
