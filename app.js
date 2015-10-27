@@ -1,9 +1,30 @@
 var serialport = require('serialport');
 var request = require('request');
 var config = require('config');
+var mqtt = require('mqtt');
 
 var configSensorAPI = config.get('sensor_api');
-var lineno = 2;
+var mqttConfig = config.get('mqttBroker');
+var client = mqtt.connect('ws://'+mqttConfig.url+':8080');//ブラウザ向け
+// var client = mqtt.connect('mqtt://'+mqttConfig.url);
+
+var lineid = 1;
+var lineno = 1;
+
+client.on('connect',function(err){
+	if(err){
+		console.log(err);
+		return;
+	}
+	console.log('MQTTBroker_connected.')
+	// client.subscribe('sensor/lineid');
+	// client.publish('presence','Hello,MQTT');
+});
+
+client.on('message',function(topic,message) {
+	console.log(message.toString());
+	client.end();
+});
 
 var portName = '/dev/ttyUSB0';
 var sp = new serialport.SerialPort(portName,{
@@ -16,10 +37,10 @@ var sp = new serialport.SerialPort(portName,{
 });
 
 sp.on('open',function(){
-	console.log('open');
+	console.log('serial-open');
 });
 
-sp.on('close',function(){ console.log('close'); });
+sp.on('close',function(){ console.log('serial-close'); });
 
 sp.on('data',function(input){
 //	var buffer = new Buffer(input,'utf8');
@@ -27,11 +48,14 @@ sp.on('data',function(input){
 	if(str.indexOf("::ts") == -1){
 	   var wk = str.split(":");
 	   console.log(wk);
-                 var id = wk[6].split("=")[1];
-                 var temp = wk[10].split("=")[1]/100;
-                 var humd = wk[11].split("=")[1]/100;
-        put_API(id,temp,humd);
 
+	   var lqi = wk[3].split("=")[1];//受信電波品質
+       var id = wk[6].split("=")[1];
+       var vcc = wk[7].split("=")[1];//子機の電源電圧
+       var temp = wk[10].split("=")[1]/100;//温度
+       var humd = wk[11].split("=")[1]/100;//湿度
+       //put_API(id,temp,humd);
+       publish_data(id,temp,humd,vcc,lqi);
 	}
 });
 
@@ -52,4 +76,16 @@ function put_API(id,temp,humd){
 		}
 		console.log('successfull: ',body);
 	});
+}
+
+//mqttでセンサーとTWELITEの情報を送信
+function publish_data(id,temp,humd,vcc,lqi){
+	var obj = {
+		"id":id,
+		"temp":temp,
+		"humd":humd,
+		"vcc":vcc,
+		"lqi":lqi
+	};
+	client.publish('sensor/lineid'+lineid,JSON.stringify(obj));
 }
